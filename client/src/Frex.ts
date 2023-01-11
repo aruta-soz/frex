@@ -58,4 +58,17 @@ export class Frex {
             Buffer.from('CONTROLLER'),
         ], this.frexProgram.programId)[0];
     }
+
+    public findDomainAddress(domainName: string): PublicKey {
+        return findProgramAddressSync([
+            Buffer.from('DOMAIN'),
+            Buffer.from(domainName),
+        ], this.frexProgram.programId)[0];
+    }
+
+    public findVaultAddress(domain: PublicKey): PublicKey {
+        return findProgramAddressSync([
+            domain.toBuffer(),
+        ], this.frexProgram.programId)[0];
+    }
 }

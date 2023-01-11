@@ -3,7 +3,7 @@ import { BN, Program, Wallet } from "@project-serum/anchor";
 import { TOKEN_PROGRAM_ID } from "@project-serum/anchor/dist/cjs/utils/token";
 import { PublicKey, SystemProgram, SYSVAR_RENT_PUBKEY, Transaction } from "@solana/web3.js";
 import { Frex } from "../client/src/Frex";
-import { Controller } from "../client/src/types";
+import { Controller, Domain } from "../client/src/types";
 import { authorityKeypair, collateralMint, payerKeypair, PROGRAM_ID } from "./constant";
 
 // Configure the client to use the local cluster.
@@ -81,7 +81,48 @@ async function createController(): Promise<{
     controllerAddress,
     controller: await frex.frexProgram.account.controller.fetchNullable(controllerAddress),
   };
-} 
+}
+
+async function registerDomain(domainName: string): Promise<{
+  domainAddress: PublicKey;
+  domain: Domain;
+}> {
+  const controllerAddress = frex.findControllerAddress();
+  const domainAddress = frex.findDomainAddress(domainName);
+  const vaultAddress = frex.findVaultAddress(domainAddress);
+
+  const domain = await frex.frexProgram.account.domain.fetchNullable(domainAddress)
+
+  if (domain) {
+    console.log(`domain ${domainAddress.toBase58()} already initialized`);
+
+    return {
+      domainAddress,
+      domain,
+    }
+  }
+
+  const tx = await frex.frexProgram.methods.registerDomain(domainName).accounts({
+    authority: authorityKeypair.publicKey,
+    payer: payerKeypair.publicKey,
+    controller: controllerAddress,
+    domain: domainAddress,
+    vault: vaultAddress,
+    collateralMint,
+    systemProgram: SystemProgram.programId,
+    tokenProgram: TOKEN_PROGRAM_ID,
+    rent: SYSVAR_RENT_PUBKEY,
+  })
+    .signers([payerKeypair, authorityKeypair])
+    .rpc();
+
+  console.log(`Register domain "${domainName}" tx: https://explorer.solana.com/tx/${tx}?cluster=devnet`)
+
+  return {
+    domainAddress,
+    domain: await frex.frexProgram.account.domain.fetchNullable(domainAddress),
+  };
+}
 
 describe("frex", () => {
   it("Initialize controller", async () => {
@@ -90,5 +131,10 @@ describe("frex", () => {
       controllerAddress,
       controller,
     } = await createController();
+
+    const {
+      domainAddress,
+      domain,
+    } = await registerDomain('frex');
   });
 });

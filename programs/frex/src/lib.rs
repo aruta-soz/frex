@@ -12,6 +12,7 @@ pub mod state;
 pub const ANCHOR_DISCRIMINATOR_SIZE: usize = 8;
 
 pub const CONTROLLER_NAMESPACE: &[u8] = b"CONTROLLER";
+pub const DOMAIN_NAMESPACE: &[u8] = b"DOMAIN";
 
 #[program]
 pub mod frex {
@@ -19,5 +20,12 @@ pub mod frex {
 
     pub fn create_controller(ctx: Context<CreateController>) -> Result<()> {
         instructions::create_controller::handler(ctx)
+    }
+
+    #[access_control(
+        ctx.accounts.validate(&name)
+    )]
+    pub fn register_domain(ctx: Context<RegisterDomain>, name: String) -> Result<()> {
+        instructions::register_domain::handler(ctx, name)
     }
 }
