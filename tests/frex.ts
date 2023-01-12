@@ -51,31 +51,33 @@ async function createController(): Promise<{
     }
   }
 
-  /*
-  displayTransactionInBase64(await frex.frexProgram.methods.createController().accounts({
-    authority: authorityKeypair.publicKey,
-    payer: payerKeypair.publicKey,
-    controller: controllerAddress,
-    collateralMint,
-    systemProgram: SystemProgram.programId,
-    tokenProgram: TOKEN_PROGRAM_ID,
-    rent: SYSVAR_RENT_PUBKEY,
-  }).transaction());
-  */
+  try {
+    const tx = await frex.frexProgram.methods.createController().accounts({
+      authority: authorityKeypair.publicKey,
+      payer: payerKeypair.publicKey,
+      controller: controllerAddress,
+      collateralMint,
+      systemProgram: SystemProgram.programId,
+      tokenProgram: TOKEN_PROGRAM_ID,
+      rent: SYSVAR_RENT_PUBKEY,
+    })
+      .signers([payerKeypair, authorityKeypair])
+      .rpc();
 
-  const tx = await frex.frexProgram.methods.createController().accounts({
-    authority: authorityKeypair.publicKey,
-    payer: payerKeypair.publicKey,
-    controller: controllerAddress,
-    collateralMint,
-    systemProgram: SystemProgram.programId,
-    tokenProgram: TOKEN_PROGRAM_ID,
-    rent: SYSVAR_RENT_PUBKEY,
-  })
-    .signers([payerKeypair, authorityKeypair])
-    .rpc();
+    console.log(`Create controller tx: https://explorer.solana.com/tx/${tx}?cluster=devnet`)
+  } catch (e) {
+    displayTransactionInBase64(await frex.frexProgram.methods.createController().accounts({
+      authority: authorityKeypair.publicKey,
+      payer: payerKeypair.publicKey,
+      controller: controllerAddress,
+      collateralMint,
+      systemProgram: SystemProgram.programId,
+      tokenProgram: TOKEN_PROGRAM_ID,
+      rent: SYSVAR_RENT_PUBKEY,
+    }).transaction());
 
-  console.log(`Create controller tx: https://explorer.solana.com/tx/${tx}?cluster=devnet`)
+    throw e;
+  }
 
   return {
     controllerAddress,
@@ -102,21 +104,37 @@ async function registerDomain(domainName: string): Promise<{
     }
   }
 
-  const tx = await frex.frexProgram.methods.registerDomain(domainName).accounts({
-    authority: authorityKeypair.publicKey,
-    payer: payerKeypair.publicKey,
-    controller: controllerAddress,
-    domain: domainAddress,
-    vault: vaultAddress,
-    collateralMint,
-    systemProgram: SystemProgram.programId,
-    tokenProgram: TOKEN_PROGRAM_ID,
-    rent: SYSVAR_RENT_PUBKEY,
-  })
-    .signers([payerKeypair, authorityKeypair])
-    .rpc();
+  try {
+    const tx = await frex.frexProgram.methods.registerDomain(domainName).accounts({
+      authority: authorityKeypair.publicKey,
+      payer: payerKeypair.publicKey,
+      controller: controllerAddress,
+      domain: domainAddress,
+      vault: vaultAddress,
+      collateralMint,
+      systemProgram: SystemProgram.programId,
+      tokenProgram: TOKEN_PROGRAM_ID,
+      rent: SYSVAR_RENT_PUBKEY,
+    })
+      .signers([payerKeypair, authorityKeypair])
+      .rpc();
 
-  console.log(`Register domain "${domainName}" tx: https://explorer.solana.com/tx/${tx}?cluster=devnet`)
+    console.log(`Register domain "${domainName}" tx: https://explorer.solana.com/tx/${tx}?cluster=devnet`)
+  } catch (e) {
+    displayTransactionInBase64(await frex.frexProgram.methods.registerDomain(domainName).accounts({
+      authority: authorityKeypair.publicKey,
+      payer: payerKeypair.publicKey,
+      controller: controllerAddress,
+      domain: domainAddress,
+      vault: vaultAddress,
+      collateralMint,
+      systemProgram: SystemProgram.programId,
+      tokenProgram: TOKEN_PROGRAM_ID,
+      rent: SYSVAR_RENT_PUBKEY,
+    }).transaction());
+
+    throw e;
+  }
 
   return {
     domainAddress,
@@ -151,20 +169,35 @@ async function createBuffer({
     }
   }
 
-  const tx = await frex.frexProgram.methods.createBuffer(new BN(version), new BN(chunkNumber)).accounts({
-    authority: authorityKeypair.publicKey,
-    payer: payerKeypair.publicKey,
-    controller: controllerAddress,
-    domain: domainAddress,
-    buffer: bufferAddress,
-    systemProgram: SystemProgram.programId,
-    tokenProgram: TOKEN_PROGRAM_ID,
-    rent: SYSVAR_RENT_PUBKEY,
-  })
-    .signers([payerKeypair, authorityKeypair])
-    .rpc();
+  try {
+    const tx = await frex.frexProgram.methods.createBuffer(new BN(version), new BN(chunkNumber)).accounts({
+      authority: authorityKeypair.publicKey,
+      payer: payerKeypair.publicKey,
+      controller: controllerAddress,
+      domain: domainAddress,
+      buffer: bufferAddress,
+      systemProgram: SystemProgram.programId,
+      tokenProgram: TOKEN_PROGRAM_ID,
+      rent: SYSVAR_RENT_PUBKEY,
+    })
+      .signers([payerKeypair, authorityKeypair])
+      .rpc();
 
-  console.log(`Create buffer tx: https://explorer.solana.com/tx/${tx}?cluster=devnet`)
+    console.log(`Create buffer tx: https://explorer.solana.com/tx/${tx}?cluster=devnet`);
+  } catch (e) {
+    displayTransactionInBase64(await frex.frexProgram.methods.createBuffer(new BN(version), new BN(chunkNumber)).accounts({
+      authority: authorityKeypair.publicKey,
+      payer: payerKeypair.publicKey,
+      controller: controllerAddress,
+      domain: domainAddress,
+      buffer: bufferAddress,
+      systemProgram: SystemProgram.programId,
+      tokenProgram: TOKEN_PROGRAM_ID,
+      rent: SYSVAR_RENT_PUBKEY,
+    }).transaction());
+
+    throw e;
+  }
 
   return {
     bufferAddress,
@@ -177,7 +210,7 @@ async function createBufferChunk({
   bufferVersion,
   chunkNumber,
 }: {
-  domainName: string; 
+  domainName: string;
   bufferVersion: number;
   chunkNumber: number;
 }) {
@@ -203,8 +236,9 @@ async function createBufferChunk({
   buffer[2] = 3;
   buffer[3] = 4;
   buffer[4] = 5;
- 
-  displayTransactionInBase64(await frex.frexProgram.methods.createBufferChunk(
+
+  try {
+    const tx = await frex.frexProgram.methods.createBufferChunk(
       // buffer version
       new BN(bufferVersion),
       // chunk number
@@ -214,46 +248,137 @@ async function createBufferChunk({
       // data
       buffer,
     ).accounts({
-    authority: authorityKeypair.publicKey,
-    payer: payerKeypair.publicKey,
-    controller: controllerAddress,
-    domain: domainAddress,
-    buffer: bufferAddress,
-    bufferChunk: bufferChunkAddress,
-    systemProgram: SystemProgram.programId,
-    tokenProgram: TOKEN_PROGRAM_ID,
-    rent: SYSVAR_RENT_PUBKEY,
-  }).transaction());
+      authority: authorityKeypair.publicKey,
+      payer: payerKeypair.publicKey,
+      controller: controllerAddress,
+      domain: domainAddress,
+      buffer: bufferAddress,
+      bufferChunk: bufferChunkAddress,
+      systemProgram: SystemProgram.programId,
+      tokenProgram: TOKEN_PROGRAM_ID,
+      rent: SYSVAR_RENT_PUBKEY,
+    })
+      .signers([payerKeypair, authorityKeypair])
+      .rpc();
 
-  const tx = await frex.frexProgram.methods.createBufferChunk(
-     // buffer version
-     new BN(bufferVersion),
-     // chunk number
-     new BN(chunkNumber),
-     // data size
-     5,
-     // data
-     buffer,
-  ).accounts({
-    authority: authorityKeypair.publicKey,
-    payer: payerKeypair.publicKey,
-    controller: controllerAddress,
-    domain: domainAddress,
-    buffer: bufferAddress,
-    bufferChunk: bufferChunkAddress,
-    systemProgram: SystemProgram.programId,
-    tokenProgram: TOKEN_PROGRAM_ID,
-    rent: SYSVAR_RENT_PUBKEY,
-  })
-    .signers([payerKeypair, authorityKeypair])
-    .rpc();
+    console.log(`Create buffer chunk tx: https://explorer.solana.com/tx/${tx}?cluster=devnet`);
+  } catch (e) {
+    displayTransactionInBase64(await frex.frexProgram.methods.createBufferChunk(
+      // buffer version
+      new BN(bufferVersion),
+      // chunk number
+      new BN(chunkNumber),
+      // data size
+      5,
+      // data
+      buffer,
+    ).accounts({
+      authority: authorityKeypair.publicKey,
+      payer: payerKeypair.publicKey,
+      controller: controllerAddress,
+      domain: domainAddress,
+      buffer: bufferAddress,
+      bufferChunk: bufferChunkAddress,
+      systemProgram: SystemProgram.programId,
+      tokenProgram: TOKEN_PROGRAM_ID,
+      rent: SYSVAR_RENT_PUBKEY,
+    }).transaction());
 
-  console.log(`Create buffer chunk tx: https://explorer.solana.com/tx/${tx}?cluster=devnet`)
+    throw e;
+  }
 
   return {
     bufferChunkAddress,
     bufferChunk: await frex.frexProgram.account.bufferChunk.fetchNullable(bufferChunkAddress),
   };
+}
+
+async function setBufferReady({
+  domainName,
+  bufferVersion,
+}: {
+  domainName: string;
+  bufferVersion: number;
+}): Promise<string> {
+  const controllerAddress = frex.findControllerAddress();
+  const domainAddress = frex.findDomainAddress(domainName);
+  const bufferAddress = frex.findBufferAddress(domainAddress, bufferVersion);
+
+  try {
+    const tx = await frex.frexProgram.methods.setBufferReady(new BN(bufferVersion)).accounts({
+      authority: authorityKeypair.publicKey,
+      payer: payerKeypair.publicKey,
+      controller: controllerAddress,
+      domain: domainAddress,
+      buffer: bufferAddress,
+      systemProgram: SystemProgram.programId,
+      tokenProgram: TOKEN_PROGRAM_ID,
+      rent: SYSVAR_RENT_PUBKEY,
+    })
+      .signers([payerKeypair, authorityKeypair])
+      .rpc();
+
+    console.log(`Set buffer as ready tx: https://explorer.solana.com/tx/${tx}?cluster=devnet`);
+
+    return tx;
+  } catch (e) {
+    displayTransactionInBase64(await frex.frexProgram.methods.setBufferReady(new BN(bufferVersion)).accounts({
+      authority: authorityKeypair.publicKey,
+      payer: payerKeypair.publicKey,
+      controller: controllerAddress,
+      domain: domainAddress,
+      buffer: bufferAddress,
+      systemProgram: SystemProgram.programId,
+      tokenProgram: TOKEN_PROGRAM_ID,
+      rent: SYSVAR_RENT_PUBKEY,
+    }).transaction());
+
+    throw e;
+  }
+}
+
+async function setDomainActiveBufferVersion({
+  domainName,
+  bufferVersion,
+}: {
+  domainName: string;
+  bufferVersion: number;
+}): Promise<string> {
+  const controllerAddress = frex.findControllerAddress();
+  const domainAddress = frex.findDomainAddress(domainName);
+  const bufferAddress = frex.findBufferAddress(domainAddress, bufferVersion);
+
+  try {
+    const tx = await frex.frexProgram.methods.setDomainActiveBufferVersion(new BN(bufferVersion)).accounts({
+      authority: authorityKeypair.publicKey,
+      payer: payerKeypair.publicKey,
+      controller: controllerAddress,
+      domain: domainAddress,
+      buffer: bufferAddress,
+      systemProgram: SystemProgram.programId,
+      tokenProgram: TOKEN_PROGRAM_ID,
+      rent: SYSVAR_RENT_PUBKEY,
+    })
+      .signers([payerKeypair, authorityKeypair])
+      .rpc();
+
+    console.log(`Set domain active buffer version tx: https://explorer.solana.com/tx/${tx}?cluster=devnet`)
+
+    return tx;
+  } catch (e) {
+    displayTransactionInBase64(await frex.frexProgram.methods.setDomainActiveBufferVersion(new BN(bufferVersion)).accounts({
+      authority: authorityKeypair.publicKey,
+      payer: payerKeypair.publicKey,
+      controller: controllerAddress,
+      domain: domainAddress,
+      buffer: bufferAddress,
+      systemProgram: SystemProgram.programId,
+      tokenProgram: TOKEN_PROGRAM_ID,
+      rent: SYSVAR_RENT_PUBKEY,
+    }).transaction());
+
+    throw e;
+  }
 }
 
 describe("frex", () => {
@@ -264,27 +389,49 @@ describe("frex", () => {
       controller,
     } = await createController();
 
+    const domainName = 'C';
+
     const {
       domainAddress,
       domain,
-    } = await registerDomain('frex');
+    } = await registerDomain(domainName);
 
     const {
       bufferAddress,
       buffer,
     } = await createBuffer({
-      domainName: 'frex',
-      version: 1, 
+      domainName,
+      version: 1,
       chunkNumber: 3,
-     });
+    });
 
-     const {
-      bufferChunkAddress,
-      bufferChunk,
-    } = await createBufferChunk({
-      domainName: 'frex',
-      bufferVersion: 1, 
-      chunkNumber: 1,
-     });
+    // Setup all buffer chunks for test
+    const infos = await Promise.all([
+      createBufferChunk({
+        domainName,
+        bufferVersion: 1,
+        chunkNumber: 1,
+      }),
+      createBufferChunk({
+        domainName,
+        bufferVersion: 1,
+        chunkNumber: 2,
+      }),
+      createBufferChunk({
+        domainName,
+        bufferVersion: 1,
+        chunkNumber: 3,
+      }),
+    ]);
+
+    await setBufferReady({
+      domainName,
+      bufferVersion: 1,
+    });
+
+    await setDomainActiveBufferVersion({
+      domainName,
+      bufferVersion: 1,
+    });
   });
 });

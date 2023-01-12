@@ -63,5 +63,35 @@ pub mod frex {
             data_size,
             data,
         )
+    }
+
+    #[access_control(
+        ctx.accounts.validate(
+            buffer_version,
+        )
+    )]
+    pub fn set_buffer_ready(
+        ctx: Context<SetBufferReady>,
+        buffer_version: u64,
+    ) -> Result<()> {
+        instructions::set_buffer_ready::handler(
+            ctx,
+            buffer_version,
+        )
     } 
+
+    #[access_control(
+        ctx.accounts.validate(
+            buffer_version,
+        )
+    )]
+    pub fn set_domain_active_buffer_version(
+        ctx: Context<SetDomainActiveBufferVersion>,
+        buffer_version: u64,
+    ) -> Result<()> {
+        instructions::set_domain_active_buffer_version::handler(
+            ctx,
+            buffer_version,
+        )
+    }  
 }

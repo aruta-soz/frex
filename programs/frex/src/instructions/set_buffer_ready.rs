@@ -1,7 +1,7 @@
 use crate::error::FrexError;
 use crate::state::Controller;
 use crate::state::Domain;
-use crate::state::{Buffer, BUFFER_SPACE};
+use crate::state::Buffer;
 use crate::CONTROLLER_NAMESPACE;
 use crate::DOMAIN_NAMESPACE;
 use anchor_lang::prelude::*;
@@ -10,9 +10,8 @@ use anchor_spl::token::Token;
 #[derive(Accounts)]
 #[instruction(
     version: u64,
-    chunk_number: u64,
 )]
-pub struct CreateBuffer<'info> {
+pub struct SetBufferReady<'info> {
     /// #1
     pub authority: Signer<'info>,
 
@@ -32,7 +31,6 @@ pub struct CreateBuffer<'info> {
 
     /// #4
     #[account(
-        mut,
         seeds = [
             DOMAIN_NAMESPACE,
             domain.load()?.get_name().as_bytes(),
@@ -44,14 +42,12 @@ pub struct CreateBuffer<'info> {
 
     /// #5
     #[account(
-        init,
+        mut,
         seeds = [
             domain.key().as_ref(),
             version.to_le_bytes().as_ref(),
         ],
-        bump,
-        payer = payer,
-        space = BUFFER_SPACE,
+        bump = buffer.load()?.bump,
     )]
     pub buffer: AccountLoader<'info, Buffer>,
 
@@ -65,38 +61,25 @@ pub struct CreateBuffer<'info> {
     pub rent: Sysvar<'info, Rent>,
 }
 
-pub fn handler(ctx: Context<CreateBuffer>, version: u64, chunk_number: u64) -> Result<()> {
+pub fn handler(ctx: Context<SetBufferReady>, version: u64) -> Result<()> {
     msg!(
-        "Create buffer {} with version {} in domain {:?}",
+        "Set buffer {} as ready. Buffer version {} in domain {:?}",
         ctx.accounts.buffer.key(),
         version,
         ctx.accounts.domain.load()?.name,
     );
 
-    let mut buffer = ctx.accounts.buffer.load_init()?;
+    let buffer = &mut ctx.accounts.buffer.load_mut()?;
 
-    buffer.bump = *ctx
-        .bumps
-        .get("buffer")
-        .ok_or_else(|| error!(FrexError::BumpError))?;
-
-    let domain = ctx.accounts.domain.load()?;
-
-    buffer.domain = ctx.accounts.domain.key();
-    buffer.domain_bump = domain.bump;
-
-    buffer.version = version;
-    buffer.chunk_number = chunk_number;
-
-    buffer.ready = false;
+    buffer.ready = true;
 
     Ok(())
 }
 
 // Validate
-impl<'info> CreateBuffer<'info> {
-    pub fn validate(&self, _version: u64, chunk_number: u64) -> Result<()> {
-        require!(chunk_number > 0, FrexError::BufferMinChunkNumber);
+impl<'info> SetBufferReady<'info> {
+    pub fn validate(&self, _version: u64) -> Result<()> {
+        require!(self.buffer.load()?.ready == false, FrexError::BufferAlreadyReady);
         Ok(())
     }
 }

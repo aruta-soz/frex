@@ -76,6 +76,8 @@ pub fn handler(ctx: Context<RegisterDomain>, name: String) -> Result<()> {
         name,
     );
 
+    msg!("True bytes used as seed for name {:?}", name.as_bytes());
+
     let domain = &mut ctx.accounts.domain.load_init()?;
 
     domain.bump = *ctx
@@ -105,6 +107,8 @@ pub fn handler(ctx: Context<RegisterDomain>, name: String) -> Result<()> {
         .ok_or_else(|| error!(FrexError::BumpError))?;
 
     domain.vault = ctx.accounts.vault.key();
+
+    domain.active_buffer_version = 0;
 
     Ok(())
 }

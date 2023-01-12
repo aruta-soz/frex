@@ -24,6 +24,10 @@ pub struct Domain {
     // Store domain registry and rent fees
     pub vault: Pubkey,
     pub vault_bump: u8,
+
+    // Buffer version in production
+    // 0 means no version is active
+    pub active_buffer_version: u64,
 }
 
 impl Domain {
@@ -40,7 +44,7 @@ impl Domain {
                 break;
             }
 
-            if j == 0 || j == 1 {
+            if j == 0 {
                 break;
             }
 
@@ -54,6 +58,8 @@ impl Domain {
             i += 1;
         }
 
+        msg!("True bytes used as seed for name {:?}", extracted_name.as_bytes());
+     
         return extracted_name;
     }
 }

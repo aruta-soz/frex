@@ -17,4 +17,7 @@ pub struct Buffer {
 
     pub version: u64,
     pub chunk_number: u64,
+
+    // means all buffer chunks have been uploaded and the buffer can be used
+    pub ready: bool,
 }
