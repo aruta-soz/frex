@@ -28,4 +28,15 @@ pub mod frex {
     pub fn register_domain(ctx: Context<RegisterDomain>, name: String) -> Result<()> {
         instructions::register_domain::handler(ctx, name)
     }
+
+    #[access_control(
+        ctx.accounts.validate(version, chunk_number)
+    )]
+    pub fn create_buffer(
+        ctx: Context<CreateBuffer>,
+        version: u64,
+        chunk_number: u64,
+    ) -> Result<()> {
+        instructions::create_buffer::handler(ctx, version, chunk_number)
+    } 
 }

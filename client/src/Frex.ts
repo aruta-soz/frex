@@ -71,4 +71,11 @@ export class Frex {
             domain.toBuffer(),
         ], this.frexProgram.programId)[0];
     }
+
+    public findBufferAddress(domain: PublicKey, version: number): PublicKey {
+        return findProgramAddressSync([
+            domain.toBuffer(),
+            new BN(version).toArrayLike(Buffer, "le", 8),
+        ], this.frexProgram.programId)[0];
+    } 
 }

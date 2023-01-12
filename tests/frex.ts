@@ -124,6 +124,55 @@ async function registerDomain(domainName: string): Promise<{
   };
 }
 
+async function createBuffer({
+  domainName,
+  version,
+  chunkNumber,
+}: {
+  domainName: string,
+  version: number,
+  chunkNumber: number,
+}): Promise<{
+  bufferAddress: PublicKey;
+  buffer: Buffer;
+}> {
+  const controllerAddress = frex.findControllerAddress();
+  const domainAddress = frex.findDomainAddress(domainName);
+  const bufferAddress = frex.findBufferAddress(domainAddress, version);
+
+  const buffer = await frex.frexProgram.account.buffer.fetchNullable(bufferAddress)
+
+  if (buffer) {
+    console.log(`buffer ${bufferAddress.toBase58()} already initialized`);
+
+    return {
+      bufferAddress,
+      buffer,
+    }
+  }
+
+  const tx = await frex.frexProgram.methods.createBuffer(new BN(version), new BN(chunkNumber)).accounts({
+    authority: authorityKeypair.publicKey,
+    payer: payerKeypair.publicKey,
+    controller: controllerAddress,
+    domain: domainAddress,
+    buffer: bufferAddress,
+    systemProgram: SystemProgram.programId,
+    tokenProgram: TOKEN_PROGRAM_ID,
+    rent: SYSVAR_RENT_PUBKEY,
+  })
+    .signers([payerKeypair, authorityKeypair])
+    .rpc();
+
+  console.log(`Create buffer tx: https://explorer.solana.com/tx/${tx}?cluster=devnet`)
+
+  return {
+    bufferAddress,
+    buffer: await frex.frexProgram.account.buffer.fetchNullable(bufferAddress),
+  };
+}
+
+
 describe("frex", () => {
   it("Initialize controller", async () => {
 
@@ -136,5 +185,14 @@ describe("frex", () => {
       domainAddress,
       domain,
     } = await registerDomain('frex');
+
+    const {
+      bufferAddress,
+      buffer,
+    } = await createBuffer({
+      domainName: 'frex',
+      version: 1, 
+      chunkNumber: 3,
+     });
   });
 });
