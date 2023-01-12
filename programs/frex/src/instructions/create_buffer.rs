@@ -67,10 +67,10 @@ pub struct CreateBuffer<'info> {
 
 pub fn handler(ctx: Context<CreateBuffer>, version: u64, chunk_number: u64) -> Result<()> {
     msg!(
-        "Create buffer {} with version {} in domain {:?}",
+        "Create buffer {} with version {} in domain {}",
         ctx.accounts.buffer.key(),
         version,
-        ctx.accounts.domain.load()?.name,
+        ctx.accounts.domain.load()?.get_name(),
     );
 
     let mut buffer = ctx.accounts.buffer.load_init()?;

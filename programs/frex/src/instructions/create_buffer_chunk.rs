@@ -88,10 +88,10 @@ pub fn handler(
     data: [u8; BUFFER_CHUNK_DATA_SIZE],
 ) -> Result<()> {
     msg!(
-        "Create buffer chunk n°{} for buffer {} in domain {:?}",
+        "Create buffer chunk n°{} for buffer {} in domain {}",
         chunk_number,
         ctx.accounts.buffer.key(),
-        ctx.accounts.domain.load()?.name,
+        ctx.accounts.domain.load()?.get_name(),
     );
 
     let mut buffer_chunk = ctx.accounts.buffer_chunk.load_init()?;

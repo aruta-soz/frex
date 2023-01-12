@@ -63,10 +63,10 @@ pub struct SetBufferReady<'info> {
 
 pub fn handler(ctx: Context<SetBufferReady>, version: u64) -> Result<()> {
     msg!(
-        "Set buffer {} as ready. Buffer version {} in domain {:?}",
+        "Set buffer {} as ready. Buffer version {} in domain {}",
         ctx.accounts.buffer.key(),
         version,
-        ctx.accounts.domain.load()?.name,
+        ctx.accounts.domain.load()?.get_name(),
     );
 
     let buffer = &mut ctx.accounts.buffer.load_mut()?;

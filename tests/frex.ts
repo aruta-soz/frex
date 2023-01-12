@@ -2,7 +2,7 @@ import * as anchor from "@project-serum/anchor";
 import { BN, Program, Wallet } from "@project-serum/anchor";
 import { TOKEN_PROGRAM_ID } from "@project-serum/anchor/dist/cjs/utils/token";
 import { PublicKey, SystemProgram, SYSVAR_RENT_PUBKEY, Transaction } from "@solana/web3.js";
-import { Frex } from "../client/src/Frex";
+import { CHUNK_BYTE_SIZE, Frex } from "../client/src/Frex";
 import { Controller, Domain, Buffer as BufferFrexType } from "../client/src/types";
 import { authorityKeypair, collateralMint, payerKeypair, PROGRAM_ID } from "./constant";
 
@@ -230,7 +230,7 @@ async function createBufferChunk({
     }
   }
 
-  const buffer = Buffer.alloc(512, 0);
+  const buffer = Buffer.alloc(CHUNK_BYTE_SIZE, 0);
   buffer[0] = 1;
   buffer[1] = 2;
   buffer[2] = 3;
