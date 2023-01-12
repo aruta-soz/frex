@@ -3,7 +3,7 @@ import { BN, Program, Wallet } from "@project-serum/anchor";
 import { TOKEN_PROGRAM_ID } from "@project-serum/anchor/dist/cjs/utils/token";
 import { PublicKey, SystemProgram, SYSVAR_RENT_PUBKEY, Transaction } from "@solana/web3.js";
 import { Frex } from "../client/src/Frex";
-import { Controller, Domain } from "../client/src/types";
+import { Controller, Domain, Buffer as BufferFrexType } from "../client/src/types";
 import { authorityKeypair, collateralMint, payerKeypair, PROGRAM_ID } from "./constant";
 
 // Configure the client to use the local cluster.
@@ -134,7 +134,7 @@ async function createBuffer({
   chunkNumber: number,
 }): Promise<{
   bufferAddress: PublicKey;
-  buffer: Buffer;
+  buffer: BufferFrexType;
 }> {
   const controllerAddress = frex.findControllerAddress();
   const domainAddress = frex.findDomainAddress(domainName);
@@ -172,6 +172,89 @@ async function createBuffer({
   };
 }
 
+async function createBufferChunk({
+  domainName,
+  bufferVersion,
+  chunkNumber,
+}: {
+  domainName: string; 
+  bufferVersion: number;
+  chunkNumber: number;
+}) {
+  const controllerAddress = frex.findControllerAddress();
+  const domainAddress = frex.findDomainAddress(domainName);
+  const bufferAddress = frex.findBufferAddress(domainAddress, bufferVersion);
+  const bufferChunkAddress = frex.findBufferChunkAddress(bufferAddress, chunkNumber);
+
+  const bufferChunk = await frex.frexProgram.account.bufferChunk.fetchNullable(bufferChunkAddress)
+
+  if (bufferChunk) {
+    console.log(`bufferChunk ${bufferChunkAddress.toBase58()} already initialized`);
+
+    return {
+      bufferChunkAddress,
+      bufferChunk,
+    }
+  }
+
+  const buffer = Buffer.alloc(512, 0);
+  buffer[0] = 1;
+  buffer[1] = 2;
+  buffer[2] = 3;
+  buffer[3] = 4;
+  buffer[4] = 5;
+ 
+  displayTransactionInBase64(await frex.frexProgram.methods.createBufferChunk(
+      // buffer version
+      new BN(bufferVersion),
+      // chunk number
+      new BN(chunkNumber),
+      // data size
+      5,
+      // data
+      buffer,
+    ).accounts({
+    authority: authorityKeypair.publicKey,
+    payer: payerKeypair.publicKey,
+    controller: controllerAddress,
+    domain: domainAddress,
+    buffer: bufferAddress,
+    bufferChunk: bufferChunkAddress,
+    systemProgram: SystemProgram.programId,
+    tokenProgram: TOKEN_PROGRAM_ID,
+    rent: SYSVAR_RENT_PUBKEY,
+  }).transaction());
+
+  const tx = await frex.frexProgram.methods.createBufferChunk(
+     // buffer version
+     new BN(bufferVersion),
+     // chunk number
+     new BN(chunkNumber),
+     // data size
+     5,
+     // data
+     buffer,
+  ).accounts({
+    authority: authorityKeypair.publicKey,
+    payer: payerKeypair.publicKey,
+    controller: controllerAddress,
+    domain: domainAddress,
+    buffer: bufferAddress,
+    bufferChunk: bufferChunkAddress,
+    systemProgram: SystemProgram.programId,
+    tokenProgram: TOKEN_PROGRAM_ID,
+    rent: SYSVAR_RENT_PUBKEY,
+  })
+    .signers([payerKeypair, authorityKeypair])
+    .rpc();
+
+  console.log(`Create buffer chunk tx: https://explorer.solana.com/tx/${tx}?cluster=devnet`)
+
+  return {
+    bufferChunkAddress,
+    bufferChunk: await frex.frexProgram.account.bufferChunk.fetchNullable(bufferChunkAddress),
+  };
+}
 
 describe("frex", () => {
   it("Initialize controller", async () => {
@@ -193,6 +276,15 @@ describe("frex", () => {
       domainName: 'frex',
       version: 1, 
       chunkNumber: 3,
+     });
+
+     const {
+      bufferChunkAddress,
+      bufferChunk,
+    } = await createBufferChunk({
+      domainName: 'frex',
+      bufferVersion: 1, 
+      chunkNumber: 1,
      });
   });
 });

@@ -1,5 +1,6 @@
 use anchor_lang::prelude::*;
 use crate::instructions::*;
+use crate::state::buffer_chunk::BUFFER_CHUNK_DATA_SIZE;
 
 declare_id!("8rWa9BXJ2X34LhR3Xb9PS3Cxnuq5VS5LGXTThnckUNCY");
 
@@ -38,5 +39,29 @@ pub mod frex {
         chunk_number: u64,
     ) -> Result<()> {
         instructions::create_buffer::handler(ctx, version, chunk_number)
+    }
+
+    #[access_control(
+        ctx.accounts.validate(
+            buffer_version,
+            chunk_number,
+            data_size,
+            data,
+        )
+    )]
+    pub fn create_buffer_chunk(
+        ctx: Context<CreateBufferChunk>,
+        buffer_version: u64,
+        chunk_number: u64,
+        data_size: u32,
+        data: [u8; BUFFER_CHUNK_DATA_SIZE],
+    ) -> Result<()> {
+        instructions::create_buffer_chunk::handler(
+            ctx,
+            buffer_version,
+            chunk_number,
+            data_size,
+            data,
+        )
     } 
 }
