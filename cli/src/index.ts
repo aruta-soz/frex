@@ -6,6 +6,7 @@ import { BN, Wallet } from "@project-serum/anchor";
 import { TOKEN_PROGRAM_ID } from "@project-serum/anchor/dist/cjs/utils/token";
 import { Connection, PublicKey, SystemProgram, SYSVAR_RENT_PUBKEY } from "@solana/web3.js";
 import { SignerWallet } from '@saberhq/solana-contrib';
+import * as crypto from "crypto";
 
 const connection = new Connection("https://api.devnet.solana.com", 'processed');
 
@@ -43,7 +44,7 @@ const frex = Frex.init({
         console.log(`Create controller tx: https://explorer.solana.com/tx/${tx}?cluster=devnet`);
     }
 
-    const domainName = 'D';
+    const domainName = 'Soz';
 
     const domainAddress = frex.findDomainAddress(domainName);
     const vaultAddress = frex.findVaultAddress(domainAddress);
@@ -96,6 +97,9 @@ const frex = Frex.init({
         const fd = fs.openSync(filePath, 'r');
 
         const stats = fs.statSync(filePath);
+        const checksum = Buffer.from(crypto.createHash('sha256')
+            .update(fs.readFileSync(filePath).toString())
+            .digest('hex').toString());
 
         console.log('FILE IS', stats.size, 'BYTES');
 
@@ -103,10 +107,11 @@ const frex = Frex.init({
         const requiredNumberOfChunks = Math.ceil(stats.size / CHUNK_BYTE_SIZE);
 
         console.log(`FILE REQUIRES ${requiredNumberOfChunks} chunks`);
+        console.log('CHECKSUM IS', checksum);
 
         // Initialize the buffer where to upload the file
         {
-            const tx = await frex.frexProgram.methods.createBuffer(new BN(bufferVersion), new BN(requiredNumberOfChunks)).accounts({
+            const tx = await frex.frexProgram.methods.createBuffer(new BN(bufferVersion), new BN(requiredNumberOfChunks), checksum).accounts({
                 authority: authorityKeypair.publicKey,
                 payer: payerKeypair.publicKey,
                 controller: controllerAddress,
@@ -187,11 +192,11 @@ const frex = Frex.init({
     }
 
     // Manual Test
-   /* await uploadFile({
-        filePath: '/Users/random/work/frex/fileToUpload.txt',
-        bufferVersion: 3,
+   await uploadFile({
+        filePath: '/Users/soz/IdeaProjects/frex/fileToUpload.txt',
+        bufferVersion: 1,
         domainAddress,
-    }); */
+    });
 
     // Look onchain for buffer and bufferChunk and reconstitute the file
     async function reconstituteFileFromOnChainBuffer({
@@ -240,8 +245,8 @@ const frex = Frex.init({
     }
 
     reconstituteFileFromOnChainBuffer({
-        newFilePath: '/Users/random/work/frex/loaded-fileToUpload.txt',
-        bufferVersion: 3,
+        newFilePath: '/Users/soz/IdeaProjects/frex/fileToUpload.txt',
+        bufferVersion: 1,
         domainAddress,
     });
 })();

@@ -11,6 +11,7 @@ use anchor_spl::token::Token;
 #[instruction(
     version: u64,
     chunk_number: u64,
+    checksum:[u8;64] //dab3f811d614abbd71e5e0403db20b701f51d48eb30312f0dd85c7dc20d7ee55
 )]
 pub struct CreateBuffer<'info> {
     /// #1
@@ -65,7 +66,7 @@ pub struct CreateBuffer<'info> {
     pub rent: Sysvar<'info, Rent>,
 }
 
-pub fn handler(ctx: Context<CreateBuffer>, version: u64, chunk_number: u64) -> Result<()> {
+pub fn handler(ctx: Context<CreateBuffer>, version: u64, chunk_number: u64, checksum: [u8;64]) -> Result<()> {
     msg!(
         "Create buffer {} with version {} in domain {}",
         ctx.accounts.buffer.key(),
@@ -87,6 +88,7 @@ pub fn handler(ctx: Context<CreateBuffer>, version: u64, chunk_number: u64) -> R
 
     buffer.version = version;
     buffer.chunk_number = chunk_number;
+    buffer.checksum = checksum;
 
     buffer.ready = false;
 
@@ -95,7 +97,7 @@ pub fn handler(ctx: Context<CreateBuffer>, version: u64, chunk_number: u64) -> R
 
 // Validate
 impl<'info> CreateBuffer<'info> {
-    pub fn validate(&self, _version: u64, chunk_number: u64) -> Result<()> {
+    pub fn validate(&self, _version: u64, chunk_number: u64, checksum: [u8;64]) -> Result<()> {
         require!(chunk_number > 0, FrexError::BufferMinChunkNumber);
         Ok(())
     }

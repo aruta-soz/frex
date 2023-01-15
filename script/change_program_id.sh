@@ -14,4 +14,4 @@ echo "New public key" $NEW_PUBKEY
 # Replace
 sed -i.bak "s/$OLD_PUBKEY/$NEW_PUBKEY/g" ./Anchor.toml
 sed -i.bak "s/$OLD_PUBKEY/$NEW_PUBKEY/g" ./programs/frex/src/lib.rs
-sed -i.bak "s/$OLD_PUBKEY/$NEW_PUBKEY/g" ./tests/constants.ts
+sed -i.bak "s/$OLD_PUBKEY/$NEW_PUBKEY/g" ./tests/constant.ts
