@@ -51,24 +51,21 @@ async function loadBuffer(domainPubKey: PublicKey, bufferVersion: number) {
     const bufferChunk: BufferChunk = await frex.frexProgram.account.bufferChunk.fetchNullable(bufferChunkAddress)
 
     console.log("bufferChunk = " + bufferChunk)
-    const out = fs.createWriteStream('/tmp/testFile.txt');
+    const out = fs.createWriteStream('./tmp/testFile.txt');
 
-    out.write(bufferChunk.data.toString());
+    out.write(Buffer.from(bufferChunk.data.slice(0, bufferChunk.dataSize)));
     out.end();
 
-    const newFile = fs.readFileSync('/tmp/testFile.txt')
+    const newFile = fs.readFileSync('./tmp/testFile.txt')
 
-    const checksumNewFile = Buffer.from(crypto.createHash('sha256')
+    const checksumBufferNewFile = Buffer.from(crypto.createHash('sha256')
         .update(newFile.toString())
-        .digest('hex').toString());
+        .digest('hex'));
 
-    const checksumAsHex = Array.from(checksum, function(byte) {
-        return ('0' + (byte & 0xFF).toString(16)).slice(-2);
-    }).join('')
+    const checksumBuffer = Buffer.from(checksum)
 
-    //compare checksum
-    console.log("checksum = " + checksumAsHex)
-    console.log("checksumNewFile = " + checksumNewFile)
+    const resultBufferCompare = Buffer.compare(checksumBuffer, checksumBufferNewFile)
+    console.log("resultBufferCompare : ", resultBufferCompare)
 
     //dezip
     return bufferChunk
