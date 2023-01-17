@@ -1,6 +1,7 @@
 use crate::error::FrexError;
 use crate::state::{Controller, Buffer};
 use crate::state::Domain;
+use crate::events::EventSetDomainActiveBufferVersion;
 use crate::CONTROLLER_NAMESPACE;
 use crate::DOMAIN_NAMESPACE;
 use anchor_lang::prelude::*;
@@ -69,6 +70,12 @@ pub fn handler(ctx: Context<SetDomainActiveBufferVersion>, buffer_version: u64) 
     let domain = &mut ctx.accounts.domain.load_mut()?;
 
     domain.active_buffer_version = buffer_version;
+
+    emit!(EventSetDomainActiveBufferVersion{
+            domain: ctx.accounts.domain.key(),
+            buffer: ctx.accounts.buffer.key(),
+            buffer_version: buffer_version,
+        });
 
     Ok(())
 }

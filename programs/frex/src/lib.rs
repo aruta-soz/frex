@@ -2,12 +2,13 @@ use anchor_lang::prelude::*;
 use crate::instructions::*;
 use crate::state::buffer_chunk::BUFFER_CHUNK_DATA_SIZE;
 
-declare_id!("8rWa9BXJ2X34LhR3Xb9PS3Cxnuq5VS5LGXTThnckUNCY");
+declare_id!("EVMEkyWDRvDedeiPjaXXMoRJh6u8r2cC1JamTihdaSip");
 
 #[macro_use]
 pub mod error;
 pub mod instructions;
 pub mod state;
+pub mod events;
 
 // Amount of byte added by anchor as prefix when calling instruction
 pub const ANCHOR_DISCRIMINATOR_SIZE: usize = 8;
@@ -31,14 +32,15 @@ pub mod frex {
     }
 
     #[access_control(
-        ctx.accounts.validate(version, chunk_number)
+        ctx.accounts.validate(version, chunk_number, checksum)
     )]
     pub fn create_buffer(
         ctx: Context<CreateBuffer>,
         version: u64,
         chunk_number: u64,
+        checksum: [u8;64],
     ) -> Result<()> {
-        instructions::create_buffer::handler(ctx, version, chunk_number)
+        instructions::create_buffer::handler(ctx, version, chunk_number, checksum)
     }
 
     #[access_control(
