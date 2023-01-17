@@ -4,6 +4,6 @@ use anchor_lang::prelude::*;
 pub struct EventSetDomainActiveBufferVersion {
     #[index]
     pub domain: Pubkey,
-    pub buffer: PubKey,
+    pub buffer: Pubkey,
     pub buffer_version: u64,
 }

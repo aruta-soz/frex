@@ -48,7 +48,7 @@ async function createController(): Promise<{
     return {
       controllerAddress,
       controller,
-    }
+    };
   }
 
   try {
@@ -101,7 +101,7 @@ async function registerDomain(domainName: string): Promise<{
     return {
       domainAddress,
       domain,
-    }
+    };
   }
 
   try {
@@ -146,10 +146,12 @@ async function createBuffer({
   domainName,
   version,
   chunkNumber,
+  checksum,
 }: {
-  domainName: string,
-  version: number,
-  chunkNumber: number,
+  domainName: string;
+  version: number;
+  chunkNumber: number;
+  checksum: Buffer;
 }): Promise<{
   bufferAddress: PublicKey;
   buffer: BufferFrexType;
@@ -166,11 +168,11 @@ async function createBuffer({
     return {
       bufferAddress,
       buffer,
-    }
+    };
   }
 
   try {
-    const tx = await frex.frexProgram.methods.createBuffer(new BN(version), new BN(chunkNumber)).accounts({
+    const tx = await frex.frexProgram.methods.createBuffer(new BN(version), new BN(chunkNumber), checksum).accounts({
       authority: authorityKeypair.publicKey,
       payer: payerKeypair.publicKey,
       controller: controllerAddress,
@@ -227,7 +229,7 @@ async function createBufferChunk({
     return {
       bufferChunkAddress,
       bufferChunk,
-    }
+    };
   }
 
   const buffer = Buffer.alloc(CHUNK_BYTE_SIZE, 0);
@@ -383,7 +385,6 @@ async function setDomainActiveBufferVersion({
 
 describe("frex", () => {
   it("Initialize controller", async () => {
-
     const {
       controllerAddress,
       controller,
@@ -403,35 +404,48 @@ describe("frex", () => {
       domainName,
       version: 1,
       chunkNumber: 3,
+      checksum: Buffer.from([
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0,
+      ]),
     });
 
-    // Setup all buffer chunks for test
-    const infos = await Promise.all([
-      createBufferChunk({
-        domainName,
-        bufferVersion: 1,
-        chunkNumber: 1,
-      }),
-      createBufferChunk({
-        domainName,
-        bufferVersion: 1,
-        chunkNumber: 2,
-      }),
-      createBufferChunk({
-        domainName,
-        bufferVersion: 1,
-        chunkNumber: 3,
-      }),
-    ]);
+    if (!buffer.ready) {
+      // Setup all buffer chunks for test
+      const infos = await Promise.all([
+        createBufferChunk({
+          domainName,
+          bufferVersion: 1,
+          chunkNumber: 1,
+        }),
+        createBufferChunk({
+          domainName,
+          bufferVersion: 1,
+          chunkNumber: 2,
+        }),
+        createBufferChunk({
+          domainName,
+          bufferVersion: 1,
+          chunkNumber: 3,
+        }),
+      ]);
 
-    await setBufferReady({
-      domainName,
-      bufferVersion: 1,
-    });
+      await setBufferReady({
+        domainName,
+        bufferVersion: 1,
+      });
+    }
 
-    await setDomainActiveBufferVersion({
-      domainName,
-      bufferVersion: 1,
-    });
+    if (domain.activeBufferVersion.toNumber() === buffer.version.toNumber()) {
+      await setDomainActiveBufferVersion({
+        domainName,
+        bufferVersion: 1,
+      });
+    }
   });
 });
