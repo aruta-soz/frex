@@ -45,7 +45,7 @@ const frex = Frex.init({
         console.log(`Create controller tx: https://explorer.solana.com/tx/${tx}?cluster=devnet`);
     }
 
-    const domainName = 'Soz';
+    const domainName = 'Random';
 
     const domainAddress = frex.findDomainAddress(domainName);
     const vaultAddress = frex.findVaultAddress(domainAddress);
@@ -70,18 +70,18 @@ const frex = Frex.init({
     }
 
     // Create a new buffer to initialize to upload a new file
-    const bufferVersion = 5;
+    const bufferVersion = 3;
 
     // Manual Test
     await uploadFile({
-        filePath: '/Users/random/work/frex/craProject.tgz',
+        filePath: './craProject.tgz',
         bufferVersion,
         domainName,
         frex,
     });
 
     await reconstituteFileFromOnChainBuffer({
-        newFilePath: '/Users/random/work/frex/loaded-craProject.tgz',
+        newFilePath: './reconstitutedcraProject.tgz',
         bufferVersion,
         domainName,
         frex,

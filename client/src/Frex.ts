@@ -1,10 +1,12 @@
 import { SolanaProvider } from "@saberhq/solana-contrib";
 import { newProgram } from '@saberhq/anchor-contrib';
+import fs from 'fs';
+import crypto from 'crypto';
 import { ConfirmOptions, Connection, PublicKey } from '@solana/web3.js';
 import { BN, Wallet } from "@project-serum/anchor";
 import { findProgramAddressSync } from "@project-serum/anchor/dist/cjs/utils/pubkey";
 import { IDL } from '../../target/types/frex';
-import {  FrexProgram } from './types';
+import { FrexProgram } from './types';
 
 export const CHUNK_BYTE_SIZE = 512;
 
@@ -90,5 +92,11 @@ export class Frex {
             buffer.toBuffer(),
             new BN(chunk_number).toArrayLike(Buffer, "le", 8),
         ], this.frexProgram.programId)[0];
+    }
+
+    public generateChecksum(buffer: Buffer): Buffer {
+        return Buffer.from(crypto.createHash('sha256')
+            .update(buffer.toString())
+            .digest('hex'));
     }
 } 

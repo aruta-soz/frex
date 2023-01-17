@@ -1,5 +1,6 @@
 import fs from 'fs'
 import BN from 'bn.js';
+import util from 'util';
 import { PublicKey, SystemProgram, SYSVAR_RENT_PUBKEY } from "@solana/web3.js";
 import { TOKEN_PROGRAM_ID } from '@project-serum/anchor/dist/cjs/utils/token';
 import { CHUNK_BYTE_SIZE, Frex } from "../../client/src/Frex";
@@ -12,6 +13,7 @@ async function initializeBuffer({
     controllerAddress,
     domainAddress,
     bufferAddress,
+    checksum,
 }: {
     bufferVersion: number;
     requiredNumberOfChunks: number;
@@ -19,8 +21,9 @@ async function initializeBuffer({
     controllerAddress: PublicKey;
     domainAddress: PublicKey;
     bufferAddress: PublicKey;
+    checksum: Buffer;
 }) {
-    const tx = await frex.frexProgram.methods.createBuffer(new BN(bufferVersion), new BN(requiredNumberOfChunks)).accounts({
+    const tx = await frex.frexProgram.methods.createBuffer(new BN(bufferVersion), new BN(requiredNumberOfChunks), checksum).accounts({
         authority: authorityKeypair.publicKey,
         payer: payerKeypair.publicKey,
         controller: controllerAddress,
@@ -137,7 +140,7 @@ class ChunkUpload {
         const bufferChunkAddress = this.frex.findBufferChunkAddress(this.bufferAddress, chunkIndex);
 
         const buffer = Buffer.alloc(CHUNK_BYTE_SIZE, 0);
-        const nbBytes = fs.readSync(this.fileDescriptor, buffer, 0, CHUNK_BYTE_SIZE, null);
+        const nbBytes = fs.readSync(this.fileDescriptor, buffer, 0, CHUNK_BYTE_SIZE, chunkIndex * CHUNK_BYTE_SIZE);
 
         // nothing to upload
         if (nbBytes === 0) {
@@ -207,8 +210,6 @@ class ChunkUpload {
         let chunkIndex = 0;
 
         while (true) {
-            chunkIndex += 1;
-
             const bufferChunkAddress = this.frex.findBufferChunkAddress(this.bufferAddress, chunkIndex);
 
             const bufferChunk = await this.frex.frexProgram.account.bufferChunk.fetchNullable(bufferChunkAddress);
@@ -220,7 +221,13 @@ class ChunkUpload {
                     this.totalChunkToUpload = chunkIndex;
                     return;
                 }
+            } else {
+                this.uploadedChunks += 1;
+
+                console.log(`Chunk n°${chunkIndex} already initialized`);
             }
+
+            chunkIndex += 1;
         }
     }
 }
@@ -261,6 +268,9 @@ export default async function uploadFile({
     const buffer = await frex.frexProgram.account.buffer.fetchNullable(bufferAddress);
 
     if (buffer === null) {
+        const fileContent = await util.promisify(fs.readFile)(filePath);
+        const checksum = frex.generateChecksum(fileContent);
+
         await initializeBuffer({
             bufferVersion,
             requiredNumberOfChunks,
@@ -268,9 +278,10 @@ export default async function uploadFile({
             controllerAddress,
             domainAddress,
             bufferAddress,
+            checksum,
         });
     } else if (buffer.ready === true) {
-        throw new Error(`Buffer version ${bufferVersion} is already initialized. Abort file upload.`);
+        throw new Error(`Buffer version ${bufferVersion} is already initialized. Abort file upload. Buffer address: ${bufferAddress.toBase58()}`);
     }
 
     const chunkUpload = ChunkUpload.init({

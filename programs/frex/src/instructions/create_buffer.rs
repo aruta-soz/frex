@@ -11,7 +11,7 @@ use anchor_spl::token::Token;
 #[instruction(
     version: u64,
     chunk_number: u64,
-    checksum:[u8;64] //dab3f811d614abbd71e5e0403db20b701f51d48eb30312f0dd85c7dc20d7ee55
+    checksum: [u8; 64],
 )]
 pub struct CreateBuffer<'info> {
     /// #1
