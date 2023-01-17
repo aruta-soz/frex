@@ -101,7 +101,7 @@ async function registerDomain(domainName: string): Promise<{
     return {
       domainAddress,
       domain,
-    }
+    };
   }
 
   try {
@@ -166,7 +166,7 @@ async function createBuffer({
     return {
       bufferAddress,
       buffer,
-    }
+    };
   }
 
   try {
@@ -227,7 +227,7 @@ async function createBufferChunk({
     return {
       bufferChunkAddress,
       bufferChunk,
-    }
+    };
   }
 
   const buffer = Buffer.alloc(CHUNK_BYTE_SIZE, 0);
