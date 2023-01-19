@@ -1,10 +1,8 @@
-import fs from 'fs'
-import util from 'util';
 import { authorityKeypair, collateralMint, payerKeypair, PROGRAM_ID } from "../../tests/constant";
-import { CHUNK_BYTE_SIZE, Frex } from '../../client/src/Frex';
-import { BN, Wallet } from "@project-serum/anchor";
+import { Frex } from '../../client/src/Frex';
+import { Wallet } from "@project-serum/anchor";
 import { TOKEN_PROGRAM_ID } from "@project-serum/anchor/dist/cjs/utils/token";
-import { Connection, PublicKey, SystemProgram, SYSVAR_RENT_PUBKEY } from "@solana/web3.js";
+import { Connection, SystemProgram, SYSVAR_RENT_PUBKEY } from "@solana/web3.js";
 import { SignerWallet } from '@saberhq/solana-contrib';
 import uploadFile from './uploadFile';
 import reconstituteFileFromOnChainBuffer from './reconstitureFileFromOnChainBuffer';
@@ -23,6 +21,19 @@ const frex = Frex.init({
         commitment: 'confirmed',
     },
 });
+
+// <=================================
+// <========== CHANGE HERE ==========
+// <=================================
+const domainName = 'Random';
+
+// Create a new buffer to initialize to upload a new file
+const bufferVersion = 3;
+
+const filePath = './craProject.tgz';
+// <=================================
+// <=================================
+// <=================================
 
 (async () => {
     // Setup the minimum controller/domain
@@ -44,8 +55,6 @@ const frex = Frex.init({
 
         console.log(`Create controller tx: https://explorer.solana.com/tx/${tx}?cluster=devnet`);
     }
-
-    const domainName = 'Random';
 
     const domainAddress = frex.findDomainAddress(domainName);
     const vaultAddress = frex.findVaultAddress(domainAddress);
@@ -69,21 +78,20 @@ const frex = Frex.init({
         console.log(`Register domain "${domainName}" tx: https://explorer.solana.com/tx/${tx}?cluster=devnet`);
     }
 
-    // Create a new buffer to initialize to upload a new file
-    const bufferVersion = 3;
-
     // Manual Test
     await uploadFile({
-        filePath: './craProject.tgz',
+        filePath,
         bufferVersion,
         domainName,
         frex,
     });
 
+    /*
     await reconstituteFileFromOnChainBuffer({
         newFilePath: './reconstitutedcraProject.tgz',
         bufferVersion,
         domainName,
         frex,
     });
+    */
 })();
