@@ -41,6 +41,36 @@ async function initializeBuffer({
     return tx;
 }
 
+async function setDomainActiveBufferVersion({
+    bufferVersion,
+    frex,
+    controllerAddress,
+    domainAddress,
+    bufferAddress,
+}: {
+    bufferVersion: number;
+    frex: Frex;
+    controllerAddress: PublicKey;
+    domainAddress: PublicKey;
+    bufferAddress: PublicKey;
+}) {
+    const tx = await frex.frexProgram.methods.setDomainActiveBufferVersion(new BN(bufferVersion)).accounts({
+        authority: authorityKeypair.publicKey,
+        payer: payerKeypair.publicKey,
+        controller: controllerAddress,
+        domain: domainAddress,
+        buffer: bufferAddress,
+        systemProgram: SystemProgram.programId,
+        tokenProgram: TOKEN_PROGRAM_ID,
+        rent: SYSVAR_RENT_PUBKEY,
+    })
+        .signers([payerKeypair, authorityKeypair])
+        .rpc();
+
+    console.log(`Set domain active buffer version tx: https://explorer.solana.com/tx/${tx}?cluster=devnet`)
+}
+
+
 async function setBufferReady({
     bufferVersion,
     frex,
@@ -130,7 +160,9 @@ class ChunkUpload {
     protected uploadFailed(chunkIndex: number, error: Error, callbackAllChunkGotUploaded: () => void) {
         console.log(`Chunk n°${chunkIndex} failed to be uploaded due to ${error}, retry ...`);
 
-        this.uploadChunk(chunkIndex, callbackAllChunkGotUploaded);
+        setTimeout(() => {
+            this.uploadChunk(chunkIndex, callbackAllChunkGotUploaded);
+        }, 600);
 
         this.chunkUploadInProgress -= 1;
     }
@@ -250,17 +282,19 @@ export default async function uploadFile({
     const domainAddress = frex.findDomainAddress(domainName);
     const bufferAddress = frex.findBufferAddress(domainAddress, bufferVersion);
 
+    console.log(`Upload file for domain: ${domainName} and buffer version: ${bufferVersion}`);
+
     // Open the file
     const fd = fs.openSync(filePath, 'r');
 
     const stats = fs.statSync(filePath);
 
-    console.log('FILE IS', stats.size, 'BYTES');
+    console.log(`File is ${stats.size.toLocaleString()} bytes`);
 
     // Check how many chunks will be required to upload the file
     const requiredNumberOfChunks = Math.ceil(stats.size / CHUNK_BYTE_SIZE);
 
-    console.log(`FILE REQUIRES ${requiredNumberOfChunks} chunks`);
+    console.log(`File requires ${requiredNumberOfChunks.toLocaleString()} chunks`);
 
     // Initialize the buffer where to upload the file
 
@@ -281,7 +315,21 @@ export default async function uploadFile({
             checksum,
         });
     } else if (buffer.ready === true) {
-        throw new Error(`Buffer version ${bufferVersion} is already initialized. Abort file upload. Buffer address: ${bufferAddress.toBase58()}`);
+        console.log('Buffer is already initalized');
+
+        if ((await frex.frexProgram.account.domain.fetch(domainAddress)).activeBufferVersion.toNumber() !== bufferVersion) {
+            await setDomainActiveBufferVersion({
+                bufferVersion,
+                frex,
+                controllerAddress,
+                domainAddress,
+                bufferAddress,
+            });
+        }
+
+        return;
+    } else {
+        console.log('Buffer is already initalized');
     }
 
     const chunkUpload = ChunkUpload.init({
@@ -295,21 +343,24 @@ export default async function uploadFile({
 
     await chunkUpload.uploadAllChunks();
 
-    // Set the buffer as ready
-    {
-        const tx = await frex.frexProgram.methods.setBufferReady(new BN(bufferVersion)).accounts({
-            authority: authorityKeypair.publicKey,
-            payer: payerKeypair.publicKey,
-            controller: controllerAddress,
-            domain: domainAddress,
-            buffer: bufferAddress,
-            systemProgram: SystemProgram.programId,
-            tokenProgram: TOKEN_PROGRAM_ID,
-            rent: SYSVAR_RENT_PUBKEY,
-        })
-            .signers([payerKeypair, authorityKeypair])
-            .rpc();
+    if (!(await frex.frexProgram.account.buffer.fetch(bufferAddress)).ready) {
+        // Set the buffer as ready
+        await setBufferReady({
+            bufferVersion,
+            frex,
+            controllerAddress,
+            domainAddress,
+            bufferAddress,
+        });
+    }
 
-        console.log(`Set buffer as ready tx: https://explorer.solana.com/tx/${tx}?cluster=devnet`);
+    if ((await frex.frexProgram.account.domain.fetch(domainAddress)).activeBufferVersion.toNumber() !== bufferVersion) {
+        await setDomainActiveBufferVersion({
+            bufferVersion,
+            frex,
+            controllerAddress,
+            domainAddress,
+            bufferAddress,
+        });
     }
 }

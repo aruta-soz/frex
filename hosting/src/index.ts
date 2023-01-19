@@ -1,22 +1,15 @@
 import fs from 'fs'
-import util from 'util';
-import stream from 'stream';
-import {authorityKeypair, collateralMint, payerKeypair, PROGRAM_ID} from "../../tests/constant";
-import {CHUNK_BYTE_SIZE, Frex} from '../../client/src/Frex';
-import {BN, Wallet} from "@project-serum/anchor";
-import {TOKEN_PROGRAM_ID} from "@project-serum/anchor/dist/cjs/utils/token";
+import { authorityKeypair, PROGRAM_ID } from "../../tests/constant";
+import { Frex } from '../../client/src/Frex';
+import { Wallet } from "@project-serum/anchor";
 import {
     Connection,
-    DataSlice,
-    GetProgramAccountsFilter,
     PublicKey,
-    SystemProgram,
-    SYSVAR_RENT_PUBKEY
 } from "@solana/web3.js";
-import {SignerWallet} from '@saberhq/solana-contrib';
+import { SignerWallet } from '@saberhq/solana-contrib';
 import * as crypto from "crypto";
-import {Buffer, BufferChunk, Domain} from '../../client/src/types';
-import * as domain from "domain";
+import { Buffer, BufferChunk, Domain } from '../../client/src/types';
+import reconstituteFileFromOnChainBuffer from './reconstitureFileFromOnChainBuffer';
 
 const connection = new Connection("https://api.devnet.solana.com", 'processed');
 
@@ -33,6 +26,58 @@ const frex = Frex.init({
     },
 });
 
+function getActiveDomains(domains: { [domainAddress: string]: Domain }): { [domainAddress: string]: Domain } {
+    return Object.entries(domains).reduce((activeDomains, [domainAddress, domain]) => {
+        if (domain.activeBufferVersion.toNumber() === 0) {
+            return activeDomains;
+        }
+
+        activeDomains[domainAddress] = domain;
+        return activeDomains;
+    }, {} as { [key: string]: Domain });
+}
+
+(async () => {
+    // Load all domains
+    const domains = await frex.getOnChainDomainList();
+    const activeDomains = getActiveDomains(domains);
+
+    // Load all active buffers
+    const activeDomainsArray = Object.entries(activeDomains);
+
+    const bufferAddresses = activeDomainsArray.map(([domainAddress, domain]) => {
+        return frex.findBufferAddress(new PublicKey(domainAddress), domain.activeBufferVersion.toNumber());
+    });
+
+    bufferAddresses.forEach((x, i) =>{
+        console.log(i, 'Buffer addresses', x.toBase58());
+    })
+
+    // const buffers = (await frex.frexProgram.account.buffer.fetchMultiple(bufferAddresses)) as Buffer[];
+
+    const downloadedWebsitesResult = await Promise.allSettled(activeDomainsArray.map(([domainAddress, domain]) => {
+        const domainName = Frex.getDomainName(domain);
+        const bufferVersion = domain.activeBufferVersion.toNumber();
+
+        return reconstituteFileFromOnChainBuffer({
+            newFilePath: `/tmp/${domainName}-${bufferVersion}.tgz`,
+            bufferVersion,
+            domainName,
+            domainAddress: new PublicKey(domainAddress),
+            frex,
+        });
+    }));
+
+    downloadedWebsitesResult.forEach((r, i) => {
+        if (r.status === 'rejected') {
+            console.log(i, 'Rejected', r.reason);
+        } else {
+            console.log(i, 'Successfull', r.value)
+        }
+    });
+})();
+
+/*
 async function loadBuffer(domainPubKey: PublicKey, bufferVersion: number) {
     const bufferAddress: PublicKey = frex.findBufferAddress(domainPubKey, bufferVersion)
 
@@ -110,3 +155,4 @@ async function loadBufferChunks(domainPubKey: PublicKey, chunk_number: number) {
     // get events
 
 })();
+*/

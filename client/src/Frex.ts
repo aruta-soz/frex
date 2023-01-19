@@ -145,6 +145,13 @@ export class Frex {
     }
 
     public static getDomainName(domain: Domain) {
-        return Buffer.from(domain.name).toString();
+        let i = 0;
+
+        // Remove leading 0 in the buffer to avoid polluting .toString()
+        while (domain.name[domain.name.length - 1 - i] == 0) {
+            i += 1;
+        }
+
+        return Buffer.from(domain.name.slice(0, i)).toString();
     }
 } 

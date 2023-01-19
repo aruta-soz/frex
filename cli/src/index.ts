@@ -25,10 +25,10 @@ const frex = Frex.init({
 // <=================================
 // <========== CHANGE HERE ==========
 // <=================================
-const domainName = 'Random';
+const domainName = 'create-react-app';
 
 // Create a new buffer to initialize to upload a new file
-const bufferVersion = 3;
+const bufferVersion = 1;
 
 const filePath = './craProject.tgz';
 // <=================================

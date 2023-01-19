@@ -1,6 +1,6 @@
 {
     "name": "@areta-hackaton/frex-client",
-    "version": "0.1.14",
+    "version": "0.1.15",
     "description": "Typescript Client to interact with the frex program on Solana.",
     "main": "client/dist/lib/client/src/index.js",
     "typings": "client/dist/types/client/src/index.d.ts",
