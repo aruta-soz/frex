@@ -1,4 +1,5 @@
 use crate::error::FrexError;
+use crate::events::EventCreateBuffer;
 use crate::state::Controller;
 use crate::state::Domain;
 use crate::state::{Buffer, BUFFER_SPACE};
@@ -66,7 +67,12 @@ pub struct CreateBuffer<'info> {
     pub rent: Sysvar<'info, Rent>,
 }
 
-pub fn handler(ctx: Context<CreateBuffer>, version: u64, chunk_number: u64, checksum: [u8;64]) -> Result<()> {
+pub fn handler(
+    ctx: Context<CreateBuffer>,
+    version: u64,
+    chunk_number: u64,
+    checksum: [u8; 64],
+) -> Result<()> {
     msg!(
         "Create buffer {} with version {} in domain {}",
         ctx.accounts.buffer.key(),
@@ -92,12 +98,17 @@ pub fn handler(ctx: Context<CreateBuffer>, version: u64, chunk_number: u64, chec
 
     buffer.ready = false;
 
+    emit!(EventCreateBuffer {
+        domain: ctx.accounts.domain.key(),
+        buffer: ctx.accounts.buffer.key(),
+    });
+
     Ok(())
 }
 
 // Validate
 impl<'info> CreateBuffer<'info> {
-    pub fn validate(&self, _version: u64, chunk_number: u64, checksum: [u8;64]) -> Result<()> {
+    pub fn validate(&self, _version: u64, chunk_number: u64, _checksum: [u8; 64]) -> Result<()> {
         require!(chunk_number > 0, FrexError::BufferMinChunkNumber);
         Ok(())
     }

@@ -1,4 +1,5 @@
 use crate::error::FrexError;
+use crate::events::EventSetBufferReady;
 use crate::state::Controller;
 use crate::state::Domain;
 use crate::state::Buffer;
@@ -73,13 +74,18 @@ pub fn handler(ctx: Context<SetBufferReady>, version: u64) -> Result<()> {
 
     buffer.ready = true;
 
+    emit!(EventSetBufferReady {
+        domain: ctx.accounts.domain.key(),
+        buffer: ctx.accounts.buffer.key(),
+    });
+
     Ok(())
 }
 
 // Validate
 impl<'info> SetBufferReady<'info> {
     pub fn validate(&self, _version: u64) -> Result<()> {
-        require!(self.buffer.load()?.ready == false, FrexError::BufferAlreadyReady);
+        require!(!self.buffer.load()?.ready, FrexError::BufferAlreadyReady);
         Ok(())
     }
 }

@@ -1,12 +1,12 @@
 import { SolanaProvider } from "@saberhq/solana-contrib";
 import { newProgram } from '@saberhq/anchor-contrib';
-import fs from 'fs';
 import crypto from 'crypto';
+import { Buffer } from 'buffer';
 import { ConfirmOptions, Connection, PublicKey } from '@solana/web3.js';
 import { BN, Wallet } from "@project-serum/anchor";
 import { findProgramAddressSync } from "@project-serum/anchor/dist/cjs/utils/pubkey";
 import { IDL } from '../../target/types/frex';
-import { FrexProgram } from './types';
+import { Domain, FrexProgram, Buffer as BufferAccount } from './types';
 
 export const CHUNK_BYTE_SIZE = 512;
 
@@ -98,5 +98,53 @@ export class Frex {
         return Buffer.from(crypto.createHash('sha256')
             .update(buffer.toString())
             .digest('hex'));
+    }
+
+    public async getOnChainDomainList(): Promise<{
+        [key: string]: Domain;
+    }> {
+        // Get every Domains
+        const encodedDomains = await this.connection.getProgramAccounts(this.frexProgram.programId, {
+            filters: [
+                {
+                    // Domain account have specific size
+                    dataSize: 1047,
+                },
+            ],
+        });
+
+        const domains: Domain[] = encodedDomains.map((encodedDomain) => this.frexProgram.coder.accounts.decode('domain', encodedDomain.account.data));
+
+        return domains.reduce((domainList, domain, index) => {
+            domainList[encodedDomains[index].pubkey.toBase58()] = domain;
+
+            return domainList;
+        }, {} as { [key: string]: Domain });
+    }
+
+    public async getOnChainBufferList(): Promise<{
+        [key: string]: BufferAccount;
+    }> {
+        // Get every Buffer
+        const encodedBuffers = await this.connection.getProgramAccounts(this.frexProgram.programId, {
+            filters: [
+                {
+                    // Buffer account have specific size
+                    dataSize: 1023,
+                },
+            ],
+        });
+
+        const buffers: BufferAccount[] = encodedBuffers.map((encodedBuffer) => this.frexProgram.coder.accounts.decode('buffer', encodedBuffer.account.data));
+
+        return buffers.reduce((bufferList, buffer, index) => {
+            bufferList[encodedBuffers[index].pubkey.toBase58()] = buffer;
+
+            return bufferList;
+        }, {} as { [key: string]: BufferAccount });
+    }
+
+    public static getDomainName(domain: Domain) {
+        return Buffer.from(domain.name).toString();
     }
 } 

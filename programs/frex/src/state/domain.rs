@@ -60,6 +60,6 @@ impl Domain {
 
         msg!("True bytes used as seed for name {:?}", extracted_name.as_bytes());
      
-        return extracted_name;
+        extracted_name
     }
 }

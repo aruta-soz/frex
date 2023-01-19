@@ -1,7 +1,7 @@
 use crate::error::FrexError;
-use crate::state::{Controller, Buffer};
-use crate::state::Domain;
 use crate::events::EventSetDomainActiveBufferVersion;
+use crate::state::Domain;
+use crate::state::{Buffer, Controller};
 use crate::CONTROLLER_NAMESPACE;
 use crate::DOMAIN_NAMESPACE;
 use anchor_lang::prelude::*;
@@ -71,11 +71,11 @@ pub fn handler(ctx: Context<SetDomainActiveBufferVersion>, buffer_version: u64) 
 
     domain.active_buffer_version = buffer_version;
 
-    emit!(EventSetDomainActiveBufferVersion{
-            domain: ctx.accounts.domain.key(),
-            buffer: ctx.accounts.buffer.key(),
-            buffer_version: buffer_version,
-        });
+    emit!(EventSetDomainActiveBufferVersion {
+        domain: ctx.accounts.domain.key(),
+        buffer: ctx.accounts.buffer.key(),
+        buffer_version: buffer_version,
+    });
 
     Ok(())
 }
@@ -83,9 +83,15 @@ pub fn handler(ctx: Context<SetDomainActiveBufferVersion>, buffer_version: u64) 
 // Validate
 impl<'info> SetDomainActiveBufferVersion<'info> {
     pub fn validate(&self, buffer_version: u64) -> Result<()> {
-        require!(self.domain.load()?.active_buffer_version != buffer_version, FrexError::BufferVersionAlreadyActiveForDomain);
+        require!(
+            self.domain.load()?.active_buffer_version != buffer_version,
+            FrexError::BufferVersionAlreadyActiveForDomain
+        );
 
-        require!(self.buffer.load()?.ready == true, FrexError::BufferIsNotReady);
+        require!(
+            self.buffer.load()?.ready,
+            FrexError::BufferIsNotReady
+        );
 
         Ok(())
     }

@@ -1,4 +1,5 @@
 use crate::error::FrexError;
+use crate::events::EventRegisterDomain;
 use crate::state::{Controller, DOMAIN_NAME_MAX_CHARACTERS};
 use crate::state::{Domain, DOMAIN_SPACE};
 use crate::CONTROLLER_NAMESPACE;
@@ -109,6 +110,10 @@ pub fn handler(ctx: Context<RegisterDomain>, name: String) -> Result<()> {
     domain.vault = ctx.accounts.vault.key();
 
     domain.active_buffer_version = 0;
+
+    emit!(EventRegisterDomain {
+        domain: ctx.accounts.domain.key(),
+    });
 
     Ok(())
 }
