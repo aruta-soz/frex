@@ -25,12 +25,12 @@ const frex = Frex.init({
 // <=================================
 // <========== CHANGE HERE ==========
 // <=================================
-const domainName = 'create-react-app';
+const domainName = 'solana-program-library-docs';
 
 // Create a new buffer to initialize to upload a new file
 const bufferVersion = 1;
 
-const filePath = './projectsExampleToUpload/craProject.tgz';
+const filePath = './projectsExampleToUpload/solanaProgramLibrary.tgz';
 // <=================================
 // <=================================
 // <=================================

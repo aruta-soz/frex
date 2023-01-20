@@ -152,6 +152,6 @@ export class Frex {
             i += 1;
         }
 
-        return Buffer.from(domain.name.slice(0, i)).toString();
+        return Buffer.from(domain.name.slice(0, domain.name.length - i)).toString();
     }
 } 
