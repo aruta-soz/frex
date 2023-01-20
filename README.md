@@ -47,13 +47,32 @@ export default [
 
 /!\ Tar the file in `.tgz` before upload /!\
 
-i.e: `tar -czf CompressedDirectory.tgz directory`
+i.e: `tar -czf CompressedDirectory.tgz directory/*`
+
+IMPORTANT: do not include the parent directory in the archive.
+Directory `build/` and file `build/index.html` should be accessible directly.
+
+FYI, to uncompress: `tar -xvf CompressedDirectory.tgz`
 
 - Execute the script:
 
 ```
   ts-node ./cli/index.ts
 ```
+
+you may see errors like:
+`signatureUnsubscribe error: WebSocket is not open: readyState 0 (CONNECTING)` 
+or
+`Server responded with 429 Too Many Requests.  Retrying after 500ms delay...`
+or
+```
+signatureSubscribe error for argument [
+  '3wSgK5Rrq9wUZzZSRe2mmdRphB4UMX6LqPvbvukLQmi9S9Ka3NYs3rZKnGYKNLRjK15MvAJ16414K1bC7oBBdMUV',
+  { commitment: 'confirmed' }
+] Cannot read properties of undefined (reading 'send')
+```
+you can stop the script and relaunch, it will resume the upload.
+can be jumpy, depends on the state of the RPC.
 
 ## Upload new onchain program
 

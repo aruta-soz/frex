@@ -2,7 +2,7 @@
 seeds = false
 skip-lint = false
 [programs.devnet]
-frex = "EVMEkyWDRvDedeiPjaXXMoRJh6u8r2cC1JamTihdaSip"
+frex = "DerEBo7cfrBda9n3s2Cd7ZY3PkE8TLkfr1rLk6rFGNdC"
 
 [registry]
 url = "https://anchor.projectserum.com"

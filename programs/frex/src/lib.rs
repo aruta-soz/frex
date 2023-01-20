@@ -2,7 +2,7 @@ use anchor_lang::prelude::*;
 use crate::instructions::*;
 use crate::state::buffer_chunk::BUFFER_CHUNK_DATA_SIZE;
 
-declare_id!("EVMEkyWDRvDedeiPjaXXMoRJh6u8r2cC1JamTihdaSip");
+declare_id!("DerEBo7cfrBda9n3s2Cd7ZY3PkE8TLkfr1rLk6rFGNdC");
 
 #[macro_use]
 pub mod error;

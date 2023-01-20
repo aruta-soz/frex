@@ -70,7 +70,6 @@ async function setDomainActiveBufferVersion({
     console.log(`Set domain active buffer version tx: https://explorer.solana.com/tx/${tx}?cluster=devnet`)
 }
 
-
 async function setBufferReady({
     bufferVersion,
     frex,
@@ -108,8 +107,8 @@ class ChunkUpload {
 
     protected chunkUploadInProgress = 0;
 
-    // 50 by 50
-    protected maxSimultaneousChunkUpload = 30;
+    // 20 by 20
+    protected maxSimultaneousChunkUpload = 20;
 
     protected constructor(
         public readonly fileDescriptor: number,

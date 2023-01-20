@@ -5,7 +5,7 @@ import payerKeypairArray from "./payerKeypairArray";
 export const authorityKeypair: Signer = Keypair.fromSecretKey(Uint8Array.from(authorityKeypairArray));
 export const payerKeypair: Signer = Keypair.fromSecretKey(Uint8Array.from(payerKeypairArray));
 
-export const PROGRAM_ID: PublicKey = new PublicKey('EVMEkyWDRvDedeiPjaXXMoRJh6u8r2cC1JamTihdaSip');
+export const PROGRAM_ID: PublicKey = new PublicKey('DerEBo7cfrBda9n3s2Cd7ZY3PkE8TLkfr1rLk6rFGNdC');
 
 /*
     random> spl-token create-token

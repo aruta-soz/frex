@@ -22,4 +22,6 @@ pub struct Buffer {
 
     // means all buffer chunks have been uploaded and the buffer can be used
     pub ready: bool,
+
+    // TODO, add total byte size for stats
 }
