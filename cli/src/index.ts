@@ -30,7 +30,7 @@ const domainName = 'create-react-app';
 // Create a new buffer to initialize to upload a new file
 const bufferVersion = 1;
 
-const filePath = './craProject.tgz';
+const filePath = './projectsExampleToUpload/craProject.tgz';
 // <=================================
 // <=================================
 // <=================================
