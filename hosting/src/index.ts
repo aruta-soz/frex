@@ -16,8 +16,15 @@ const connection = new Connection("https://api.devnet.solana.com", 'processed');
 // <=========== CHANGE HERE ============
 // <====================================
 
+// on EC2 requests from 80 are redirected to port 3000
 const PORT = 3_000;
+
+// on EC2 use the public ip address for now
 const SERVER_DOMAIN = 'http://localhost';
+
+// Do not end with '/' it's added inside of the function
+// /home/ec2-user/websites on EC2
+const DIRECTORY = '/tmp';
 
 // <====================================
 // <====================================
@@ -61,8 +68,7 @@ async function loadDomainActiveBufferVersionFileAndServe({
 
     try {
         await reconstituteFileFromOnChainBuffer({
-            // Do not end with '/' it's added inside of the function
-            directory: '/tmp',
+            directory: DIRECTORY,
             bufferVersion,
             domainName,
             domainAddress,
@@ -71,7 +77,7 @@ async function loadDomainActiveBufferVersionFileAndServe({
 
         // Serve the file
         server.declareDomainBufferVersionFile({
-            directory: '/tmp',
+            directory: DIRECTORY,
             domainName,
             bufferVersion,
             serverDomain: SERVER_DOMAIN,
