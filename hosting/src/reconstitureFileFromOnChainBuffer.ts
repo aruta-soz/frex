@@ -12,13 +12,13 @@ function writeStreamEnd(writeStream: fs.WriteStream): Promise<void> {
 
 // Look onchain for buffer and bufferChunk and reconstitute the file
 export default async function reconstituteFileFromOnChainBuffer({
-    newFilePath,
+    directory,
     bufferVersion,
     domainName,
     domainAddress,
     frex,
 }: {
-    newFilePath: string;
+    directory: string;
     bufferVersion: number;
     domainName: string;
     domainAddress: PublicKey;
@@ -26,8 +26,10 @@ export default async function reconstituteFileFromOnChainBuffer({
 }) {
     console.log(`Load file for DomainName: ${domainName} with BufferVersion: ${bufferVersion}`);
 
-    if (fs.existsSync(newFilePath)) {
-        console.log(`Domain: ${domainName}, Buffer version: ${bufferVersion}, ${newFilePath} file is already downloaded`);
+    const compressedFilePath = `${directory}/${domainName}-${bufferVersion}.tgz`;
+
+    if (fs.existsSync(compressedFilePath)) {
+        console.log(`Domain: ${domainName}, Buffer version: ${bufferVersion}, ${compressedFilePath} file is already downloaded`);
         return;
     }
 
@@ -39,11 +41,11 @@ export default async function reconstituteFileFromOnChainBuffer({
     }
 
     // Create the new file
-    const writeStream = fs.createWriteStream(newFilePath, {
+    const writeStream = fs.createWriteStream(compressedFilePath, {
         flags: 'w+',
     });
 
-    const fd = fs.openSync(newFilePath, 'w+');
+    const fd = fs.openSync(compressedFilePath, 'w+');
 
     for (let chunkNumber = 0; chunkNumber < buffer.chunkNumber.toNumber(); chunkNumber++) {
         console.log(`Load chunk n°${chunkNumber} informations onchain`);
@@ -63,7 +65,7 @@ export default async function reconstituteFileFromOnChainBuffer({
 
     fs.closeSync(fd);
 
-    const newFileChecksum = frex.generateChecksum(await util.promisify(fs.readFile)(newFilePath));
+    const newFileChecksum = frex.generateChecksum(await util.promisify(fs.readFile)(compressedFilePath));
 
     console.log('Original buffer checksum', Buffer.from(buffer.checksum));
     console.log('New file checksum', newFileChecksum);
@@ -76,9 +78,9 @@ export default async function reconstituteFileFromOnChainBuffer({
 
     console.log('File checksum matches.');
 
-    // Unzip the file
-    const decompressedDirectory = `${newFilePath.slice(0, newFilePath.length - '.tgz'.length)}`;
+    // Decompress the file
+    const decompressedFilePath = `${directory}/${domainName}-${bufferVersion}`;
 
-    const ret = await util.promisify(exec)(`mkdir ${decompressedDirectory}; tar -xvf ${newFilePath} -C ${decompressedDirectory}`);
-    console.log('ret', ret);
+    const stdout = await util.promisify(exec)(`tar -xvf ${compressedFilePath} -C ${decompressedFilePath}`);
+    console.log('stdout', stdout);
 }

@@ -1,15 +1,14 @@
-import fs from 'fs'
-import { authorityKeypair, PROGRAM_ID } from "../../tests/constant";
-import { Frex } from '../../client/src/Frex';
 import { Wallet } from "@project-serum/anchor";
 import {
     Connection,
     PublicKey,
 } from "@solana/web3.js";
 import { SignerWallet } from '@saberhq/solana-contrib';
-import * as crypto from "crypto";
-import { Buffer, BufferChunk, Domain } from '../../client/src/types';
+import { authorityKeypair, PROGRAM_ID } from "../../tests/constant";
+import { Frex } from '../../client/src/Frex';
+import { Domain } from '../../client/src/types';
 import reconstituteFileFromOnChainBuffer from './reconstitureFileFromOnChainBuffer';
+import FrexServer from './FrexServer';
 
 const connection = new Connection("https://api.devnet.solana.com", 'processed');
 
@@ -26,6 +25,8 @@ const frex = Frex.init({
     },
 });
 
+const server = new FrexServer();
+
 function getActiveDomains(domains: { [domainAddress: string]: Domain }): { [domainAddress: string]: Domain } {
     return Object.entries(domains).reduce((activeDomains, [domainAddress, domain]) => {
         if (domain.activeBufferVersion.toNumber() === 0) {
@@ -37,122 +38,68 @@ function getActiveDomains(domains: { [domainAddress: string]: Domain }): { [doma
     }, {} as { [key: string]: Domain });
 }
 
-(async () => {
-    // Load all domains
-    const domains = await frex.getOnChainDomainList();
-    const activeDomains = getActiveDomains(domains);
+async function loadDomainActiveBufferVersionFileAndServe({
+    domainAddress,
+    domain,
+}: {
+    domainAddress: PublicKey;
+    domain: Domain;
+}) {
+    const domainName = Frex.getDomainName(domain);
+    const bufferVersion = domain.activeBufferVersion.toNumber();
 
-    // Load all active buffers
-    const activeDomainsArray = Object.entries(activeDomains);
-
-    const bufferAddresses = activeDomainsArray.map(([domainAddress, domain]) => {
-        return frex.findBufferAddress(new PublicKey(domainAddress), domain.activeBufferVersion.toNumber());
-    });
-
-    bufferAddresses.forEach((x, i) =>{
-        console.log(i, 'Buffer addresses', x.toBase58());
-    })
-
-    // const buffers = (await frex.frexProgram.account.buffer.fetchMultiple(bufferAddresses)) as Buffer[];
-
-    const downloadedWebsitesResult = await Promise.allSettled(activeDomainsArray.map(([domainAddress, domain]) => {
-        const domainName = Frex.getDomainName(domain);
-        const bufferVersion = domain.activeBufferVersion.toNumber();
-
-        return reconstituteFileFromOnChainBuffer({
-            newFilePath: `/tmp/${domainName}-${bufferVersion}.tgz`,
+    try {
+        await reconstituteFileFromOnChainBuffer({
+            // Do not end with '/' it's added inside of the function
+            directory: '/tmp',
             bufferVersion,
             domainName,
-            domainAddress: new PublicKey(domainAddress),
+            domainAddress,
             frex,
         });
-    }));
 
-    downloadedWebsitesResult.forEach((r, i) => {
-        if (r.status === 'rejected') {
-            console.log(i, 'Rejected', r.reason);
-        } else {
-            console.log(i, 'Successfull', r.value)
-        }
-    });
-})();
-
-/*
-async function loadBuffer(domainPubKey: PublicKey, bufferVersion: number) {
-    const bufferAddress: PublicKey = frex.findBufferAddress(domainPubKey, bufferVersion)
-
-    const buffer: Buffer = await frex.frexProgram.account.buffer.fetchNullable(bufferAddress)
-    if (buffer === null)
-        throw new Error(`buffer at address ${bufferAddress} is missing, what is happening ?`)
-
-    console.log("buffer = " + buffer)
-
-    const checksum = buffer.checksum
-    const bufferChunkAddress: PublicKey = frex.findBufferChunkAddress(bufferAddress, buffer.chunkNumber.toNumber())
-    //open stream and put chunk inside during execution
-
-    console.log("bufferChunkAddress = " + bufferChunkAddress)
-
-    const bufferChunk: BufferChunk = await frex.frexProgram.account.bufferChunk.fetchNullable(bufferChunkAddress)
-
-    console.log("bufferChunk = " + bufferChunk)
-    const out = fs.createWriteStream('./tmp/testFile.txt');
-
-    out.write(Buffer.from(bufferChunk.data.slice(0, bufferChunk.dataSize)));
-    out.end();
-
-    const newFile = fs.readFileSync('./tmp/testFile.txt')
-
-    const checksumBufferNewFile = Buffer.from(crypto.createHash('sha256')
-        .update(newFile.toString())
-        .digest('hex'));
-
-    const checksumBuffer = Buffer.from(checksum)
-
-    const resultBufferCompare = Buffer.compare(checksumBuffer, checksumBufferNewFile)
-    console.log("resultBufferCompare : ", resultBufferCompare)
-
-    //dezip
-    return bufferChunk
+        // Serve the file
+        server.declareDomainBufferVersionFile({
+            directory: '/tmp',
+            domainName,
+            bufferVersion,
+        })
+    } catch (e) {
+        // Ignore error -- means corrupted buffer or something else, will retry next loop
+        console.log(`Loading domain: ${domainName}, buffer version: ${bufferVersion}, failed`);
+        return;
+    }
 }
 
-async function loadBufferChunks(domainPubKey: PublicKey, chunk_number: number) {
-    const bufferChunkAddress = frex.findBufferChunkAddress(domainPubKey, chunk_number)
-
-    const bufferChunk = await frex.frexProgram.account.bufferChunk.fetchNullable(bufferChunkAddress)
-    if (bufferChunk === null)
-        throw new Error(`bufferChunk at address ${bufferChunkAddress} is missing, what is happening ?`)
-
-    return bufferChunk
+function sleep(timeInMs: number): Promise<void> {
+    return new Promise((resolve) => {
+        setTimeout(() => resolve(), timeInMs);
+    });
 }
 
 (async () => {
-    const domains = await connection.getProgramAccounts(PROGRAM_ID, {
-        encoding: 'base64',
-        dataSlice: {offset: 0, length: 0},
-        filters: [{dataSize: 1047}]
-    })
-    const domainsData: Domain[] = await frex.frexProgram.account.domain.fetchMultiple(domains.map(domain => domain.pubkey)) as Domain[]
+    await server.start();
 
-    const activeDomains = domainsData.reduce((accActiveDomains: { [key: string]: Domain }, domain: Domain, i: number) => {
-        if (domain.activeBufferVersion.toNumber() === 0)
-            return accActiveDomains
+    // Bruteforce loop
+    // TODO: use events
+    while (true) {
+        // Load all domains
+        const domains = await frex.getOnChainDomainList();
+        const activeDomains = getActiveDomains(domains);
 
-        accActiveDomains[domains[i].pubkey.toBase58()] = domain
-        return accActiveDomains
-    }, {} as { [key: string]: Domain; })
+        // Load all active buffers
+        const activeDomainsArray = Object.entries(activeDomains);
 
-    // generate buffer address
-    const buffers = await Promise.all(Object.entries(activeDomains).map(([domainPubKey, domain]) => loadBuffer(new PublicKey(domainPubKey), domain.activeBufferVersion.toNumber())))
+        // For each active domain, load the underlying file and serve it
+        //
+        // Do not handle unserving old buffer, serve everything for now.
+        await Promise.all(activeDomainsArray.map(([domainAddress, domain]) => loadDomainActiveBufferVersionFileAndServe({
+            domainAddress: new PublicKey(domainAddress),
+            domain,
+        })));
 
-    console.log(buffers)
-
-
-
-
-    // add events in program (create instruction)
-
-    // get events
-
+        console.log('Waiting 30 seconds ...');
+        console.log('');
+        await sleep(30_000);
+    }
 })();
-*/
