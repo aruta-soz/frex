@@ -2,6 +2,7 @@ import express from 'express';
 import http from 'http';
 import type { Express } from 'express';
 import { existsSync, fstat, fstatSync } from 'fs';
+import path from 'path';
 
 export default class FrexServer {
     protected app: Express;
@@ -31,6 +32,21 @@ export default class FrexServer {
                 console.log(`App listening on port ${port}`);
 
                 resolve();
+            });
+
+            // Render 404 for subdomain not handled yet
+            this.app.all('/*', (req, res, next) => {
+                console.log('Want to load', )
+
+                const subdomainName = req.params[0];
+
+                if (this.subdomains[subdomainName]) {
+                    return next();
+                }
+
+                // If subdomain is not handled yet, return a 404
+                res.status(404);
+                res.sendFile(path.join(__dirname, '404.html'));
             });
         });
     }

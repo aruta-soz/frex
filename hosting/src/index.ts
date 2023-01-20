@@ -20,6 +20,7 @@ const connection = new Connection("https://api.devnet.solana.com", 'processed');
 const PORT = 3_000;
 
 // on EC2 use the public ip address for now
+// http://44.205.216.27
 const SERVER_DOMAIN = 'http://localhost';
 
 // Do not end with '/' it's added inside of the function

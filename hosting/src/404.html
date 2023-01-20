@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Project not found</title>
+    <style>
+        html,
+        body {
+            height: 100%;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        body {
+            background-color: #111111;
+            color: white;
+            font-size: 2em;
+        }
+
+        .explaination {}
+    </style>
+</head>
+
+<body>
+    <div style="font-size: 10em; transform: rotateZ(90deg);">
+        :(
+    </div>
+    <div style="margin-top: 1em;">
+        It seems that the project is not loaded yet server-side.
+    </div>
+    <div>
+        It may take some time for the server to download all the chunks through the RPC!
+    </div>
+
+    <div style="margin-top: 1em;">
+        Please wait.
+    </div>
+
+    <div style="margin-top: 1em;">
+        This page will refresh automatically in <span id="refresh-time">20</span>s.
+    </div>
+</body>
+
+<script>
+    let refreshTime = 20;
+
+    setInterval(() => {
+        if (refreshTime <= 0) {
+            location.reload();
+            return;
+        }
+
+        refreshTime -= 1;
+
+        document.getElementById('refresh-time').innerHTML = refreshTime.toString();
+    }, 1_000);
+</script>
+
+</html>
