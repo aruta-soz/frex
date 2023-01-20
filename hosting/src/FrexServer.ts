@@ -36,8 +36,6 @@ export default class FrexServer {
 
             // Render 404 for subdomain not handled yet
             this.app.all('/*', (req, res, next) => {
-                console.log('Want to load', )
-
                 const subdomainName = req.params[0];
 
                 if (this.subdomains[subdomainName]) {
