@@ -12,6 +12,17 @@ import FrexServer from './FrexServer';
 
 const connection = new Connection("https://api.devnet.solana.com", 'processed');
 
+// <====================================
+// <=========== CHANGE HERE ============
+// <====================================
+
+const PORT = 3_000;
+const SERVER_DOMAIN = 'http://localhost';
+
+// <====================================
+// <====================================
+// <====================================
+
 // Forces the type here - it's enough for Frex needs
 const wallet = (new SignerWallet(authorityKeypair)) as unknown as Wallet;
 
@@ -63,6 +74,7 @@ async function loadDomainActiveBufferVersionFileAndServe({
             directory: '/tmp',
             domainName,
             bufferVersion,
+            serverDomain: SERVER_DOMAIN,
         })
     } catch (e) {
         // Ignore error -- means corrupted buffer or something else, will retry next loop
@@ -78,7 +90,7 @@ function sleep(timeInMs: number): Promise<void> {
 }
 
 (async () => {
-    await server.start();
+    await server.start(PORT);
 
     // Bruteforce loop
     // TODO: use events

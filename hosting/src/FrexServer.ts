@@ -64,10 +64,12 @@ export default class FrexServer {
         directory,
         domainName,
         bufferVersion,
+        serverDomain,
     }: {
         directory: string;
         domainName: string;
         bufferVersion: number;
+        serverDomain: string;
     }) {
         const domainAndVersion = `${domainName}-${bufferVersion}`;
 
@@ -118,7 +120,7 @@ export default class FrexServer {
         this.app.get(`/${domainAndVersion}`, (req, res) => {
             // Redirect to the proper server
             res.writeHead(302, {
-                Location: `http://localhost:${port}`,
+                Location: `${serverDomain}:${port}`,
             });
 
             res.end();
